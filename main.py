@@ -20,7 +20,7 @@ def go(config: DictConfig):
         # This was passed on the command line as a comma-separated list of steps
         steps_to_execute = config["main"]["execute_steps"].split(",")
     else:
-        assert isinstance(config["main"]["execute_steps"], list)
+        # assert isinstance(config["main"]["execute_steps"], list)
         steps_to_execute = config["main"]["execute_steps"]
 
     # Download step
@@ -56,7 +56,7 @@ def go(config: DictConfig):
 
         ## YOUR CODE HERE: call the check_data step
         _ = mlflow.run(
-            os.path.join(root_path, "preprocess"),
+            os.path.join(root_path, "check_data"),
             "main",
             parameters={
                 "reference_artifact": config["data"]["reference_dataset"],
@@ -77,7 +77,7 @@ def go(config: DictConfig):
                 "artifact_root": "base",
                 "artifact_type": "segregated_data",
                 "test_size": config["data"]["test_size"],
-                "random_state": config["random_seed"],
+                "random_state": config["main"]["random_seed"],
                 "stratify": config["data"]["stratify"]
             },
         )
@@ -93,13 +93,13 @@ def go(config: DictConfig):
 
         ## YOUR CODE HERE: call the random_forest step
         _ = mlflow.run(
-            os.path.join(root_path, "preprocess"),
+            os.path.join(root_path, "random_forest"),
             "main",
             parameters={
                 "train_data": "base_train.csv:latest",
                 "model_config": model_config,
                 "export_artifact": config["random_forest_pipeline"]["export_artifact"],
-                "random_seed": config["random_seed"],
+                "random_seed": config["main"]["random_seed"],
                 "val_size": config["data"]["val_size"],
                 "stratify": config["data"]["stratify"]
             },
@@ -111,10 +111,10 @@ def go(config: DictConfig):
 
         ## YOUR CODE HERE: call the evaluate step
         _ = mlflow.run(
-            os.path.join(root_path, "segregate"),
+            os.path.join(root_path, "evaluate"),
             "main",
             parameters={
-                "model_export": f"{config["random_forest_pipeline"]["export_artifact"]}:prod",
+                "model_export": "{}:latest".format(config["random_forest_pipeline"]["export_artifact"]),
                 "test_data": "base_test.csv:latest"
             },
         )
